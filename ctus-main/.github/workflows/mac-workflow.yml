@@ -1,0 +1,154 @@
+name: libctus CI MacOS
+
+on:
+  pull_request:
+  release:
+    types: [created]
+
+jobs:
+  build-mac:
+    runs-on: macos-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        c_compiler: [clang]
+        include:
+          - c_compiler: clang
+            cpp_compiler: clang++
+            vcpkg_root: $HOME/vcpkg
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set reusable strings
+        id: strings
+        shell: bash
+        run: |
+          if [ "${{ github.ref }}" == "refs/heads/main" ]; then
+            echo "build-type=release" >> "$GITHUB_OUTPUT"
+            echo "test-folder=Release" >> "$GITHUB_OUTPUT"
+          else
+            echo "build-type=debug" >> "$GITHUB_OUTPUT"
+            echo "test-folder=Debug" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Setup vcpkg
+        run: |
+          if [ ! -d "${{ matrix.vcpkg_root }}" ]; then
+            git clone https://github.com/microsoft/vcpkg.git "${{ matrix.vcpkg_root }}"
+            "${{ matrix.vcpkg_root }}/bootstrap-vcpkg.sh"
+          fi
+      - name: Export GitHub Actions cache environment variables
+        uses: actions/github-script@v7
+        with:
+          script: |
+            core.exportVariable('ACTIONS_CACHE_URL', process.env.ACTIONS_CACHE_URL || '');
+            core.exportVariable('ACTIONS_RUNTIME_TOKEN', process.env.ACTIONS_RUNTIME_TOKEN || '');
+      - name: Setup vcpkg cache
+        shell: bash
+        run: |
+          mkdir -p "${{ github.workspace }}/vcpkg_cache"
+          export VCPKG_DEFAULT_BINARY_CACHE="${{ github.workspace }}/vcpkg_cache"
+          export VCPKG_BINARY_SOURCES="clear;x-gha,readwrite;files,${{ github.workspace }}/vcpkg_cache,readwrite"
+          echo "VCPKG_DEFAULT_BINARY_CACHE=$VCPKG_DEFAULT_BINARY_CACHE" >> $GITHUB_ENV
+          echo "VCPKG_BINARY_SOURCES=$VCPKG_BINARY_SOURCES" >> $GITHUB_ENV
+
+      - name: Cache vcpkg
+        uses: actions/cache@v4
+        with:
+          path: ${{ github.workspace }}/vcpkg_cache
+          key: vcpkg-${{ runner.os }}-${{ hashFiles('vcpkg.json') }}
+          restore-keys: |
+            vcpkg-${{ runner.os }}
+      - name: Cache build folder
+        uses: actions/cache@v4
+        with:
+          path: |
+            build
+          key: macos-build-${{ matrix.c_compiler }}-${{ steps.strings.outputs.build-type }}-${{ github.ref_name }}-${{ hashFiles('CMakeLists.txt', '**/CMakeLists.txt', 'vcpkg.json') }}
+          restore-keys: |
+            macos-build-${{ matrix.c_compiler }}-${{ steps.strings.outputs.build-type }}-${{ github.ref_name }}-
+            macos-build-${{ matrix.c_compiler }}-${{ steps.strings.outputs.build-type }}-
+
+      - name: Configure CMake
+        run: |
+          cmake -S . -B build -DCMAKE_TOOLCHAIN_FILE=${{ matrix.vcpkg_root }}/scripts/buildsystems/vcpkg.cmake -DCMAKE_BUILD_TYPE=${{ steps.strings.outputs.build-type }}
+      - name: Build Library
+        run: cmake --build build --target ctus --config ${{ steps.strings.outputs.build-type }}
+
+      - name: Build Tests
+        run: cmake --build build --target CTUS_test --config ${{ steps.strings.outputs.build-type }}
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-artifacts-mac
+          path: build/build/ctus/lib/libctus.dylib
+
+      - name: Upload artifacts for test
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-artifacts-for-test-mac
+          path: |
+            build/build/ctus/lib/libctus.dylib
+            build/build/CTUS_test/bin/CTUS_test
+
+  test-mac:
+    needs: build-mac
+    runs-on: macos-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest]
+
+    steps:
+      - name: Set reusable strings
+        id: strings
+        shell: bash
+        run: |
+          if [ "${{ github.ref }}" == "refs/heads/main" ]; then
+            echo "build-type=release" >> "$GITHUB_OUTPUT"
+            echo "test-folder=Release" >> "$GITHUB_OUTPUT"
+          else
+            echo "build-type=debug" >> "$GITHUB_OUTPUT"
+            echo "test-folder=debug" >> "$GITHUB_OUTPUT"
+          fi
+      - name: "Create folder for test results"
+        run: mkdir -p ${{ github.workspace }}/build/${{ steps.strings.outputs.test-folder }}
+      - uses: actions/checkout@v4
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: build-artifacts-for-test-mac
+          path: build/build/
+
+      - name: Run Mockoon CLI
+        uses: mockoon/cli-action@v2
+        with:
+          version: "latest"
+          data-file: "./configuration/mockoon-data.json"
+          port: 3000
+
+      - name: Download and unzip tusd
+        run: |
+          curl -L -o tusd.zip https://github.com/tus/tusd/releases/download/v2.5.0/tusd_darwin_arm64.zip
+          unzip tusd.zip -d tusd
+          chmod +x tusd/tusd_darwin_arm64/tusd
+      - name: Run tusd in background
+        run: |
+          nohup ./tusd/tusd_darwin_arm64/tusd -host 0.0.0.0 -port 8080 &
+
+      - name: Test Project
+        run: |
+          chmod +x build/build/CTUS_test/bin/CTUS_test
+          export DYLD_LIBRARY_PATH=build/build/ctus/lib:$DYLD_LIBRARY_PATH
+          build/build/CTUS_test/bin/CTUS_test --gtest_output=xml:build/${{ steps.strings.outputs.test-folder }}/test-results.xml
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: build/${{ steps.strings.outputs.test-folder }}/test-results.xml
+          asset_content_type: application/zip

@@ -1,0 +1,31 @@
+# Build outputs
+*.o
+*.a
+*.so
+*.class
+*.pyc
+
+# Android build
+build/
+.gradle/
+local.properties
+*.iml
+.idea/
+
+# NDK build artifacts
+obj/
+libs/
+
+# IJKPlayer build artifacts (we'll build these via GitHub Actions)
+ijk-player/android/contrib/build/
+ijk-player/android/contrib/ffmpeg-arm64/
+ijk-player/ios/build/
+
+# Large binary files
+*.zip
+*.tar.gz
+*.dmg
+
+# OS files
+.DS_Store
+Thumbs.db

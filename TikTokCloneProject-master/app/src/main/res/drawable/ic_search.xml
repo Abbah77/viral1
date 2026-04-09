@@ -1,0 +1,9 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="28dp"
+    android:height="28dp"
+    android:viewportWidth="40"
+    android:viewportHeight="40">
+  <path
+      android:fillColor="@color/tiktok_white"
+      android:pathData="M 29.4 29.9664 L 20.7664 21.3336 q -1 0.8328 -2.3328 1.316 q -1.3336 0.484 -2.8 0.484 q -3.6336 0 -6.1336 -2.5 T 7 14.5664 q 0 -3.5664 2.5 -6.0832 t 6.1 -2.5168 q 3.5664 0 6.0664 2.5168 t 2.5 6.0832 q 0 1.4336 -0.4664 2.7504 q -0.4664 1.3168 -1.3664 2.4496 L 31 28.3664 Z M 15.6 20.9 q 2.6336 0 4.4832 -1.8504 q 1.8504 -1.8496 1.8504 -4.4832 q 0 -2.6328 -1.8504 -4.5 Q 18.2336 8.2 15.6 8.2 q -2.6664 0 -4.5168 1.8664 q -1.8496 1.8672 -1.8496 4.5 q 0 2.6336 1.8496 4.4832 q 1.8504 1.8504 4.5168 1.8504 Z"/>
+</vector>

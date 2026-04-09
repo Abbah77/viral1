@@ -1,0 +1,22 @@
+.idea
+.vs
+.vscode
+
+.DS_Store
+# Ignore all log files
+*.log
+
+# Ignore Python cache files
+.venv
+__pycache__/
+*.pyc
+*.pyo
+#Ignore build and distribution directories
+build/
+dist/
+# Ignore Python bytecode files
+
+# Ignore CMakeUserPresets
+CMakeCache.txt
+CMakeFiles/
+CMakeUserPresets.json

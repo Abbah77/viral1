@@ -1,0 +1,155 @@
+name: libctus CI Linux
+
+on:
+  pull_request:
+  release:
+    types: [created]
+
+jobs:
+  build-linux:
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        c_compiler: [gcc]
+        include:
+          - c_compiler: gcc
+            cpp_compiler: g++
+            vcpkg_root: $HOME/vcpkg
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set reusable strings
+        id: strings
+        shell: bash
+        run: |
+          if [ "${{ github.ref }}" == "refs/heads/main" ]; then
+            echo "build-type=release" >> "$GITHUB_OUTPUT"
+            echo "test-folder=release" >> "$GITHUB_OUTPUT"
+          else
+            echo "build-type=debug" >> "$GITHUB_OUTPUT"
+            echo "test-folder=debug" >> "$GITHUB_OUTPUT"
+          fi
+      
+     
+      - name: Setup vcpkg
+        run: |
+          if [ ! -d "${{ matrix.vcpkg_root }}" ]; then
+            git clone https://github.com/microsoft/vcpkg.git "${{ matrix.vcpkg_root }}"
+            "${{ matrix.vcpkg_root }}/bootstrap-vcpkg.sh"
+          fi
+      - name: Export GitHub Actions cache environment variables
+        uses: actions/github-script@v7
+        with:
+          script: |
+            core.exportVariable('ACTIONS_CACHE_URL', process.env.ACTIONS_CACHE_URL || '');
+            core.exportVariable('ACTIONS_RUNTIME_TOKEN', process.env.ACTIONS_RUNTIME_TOKEN || '');
+      - name: Setup vcpkg cache
+        shell: bash
+        run: |
+          mkdir -p "${{ github.workspace }}/vcpkg_cache"
+          export VCPKG_DEFAULT_BINARY_CACHE="${{ github.workspace }}/vcpkg_cache"
+          export VCPKG_BINARY_SOURCES="clear;x-gha,readwrite;files,${{ github.workspace }}/vcpkg_cache,readwrite"
+          echo "VCPKG_DEFAULT_BINARY_CACHE=$VCPKG_DEFAULT_BINARY_CACHE" >> $GITHUB_ENV
+          echo "VCPKG_BINARY_SOURCES=$VCPKG_BINARY_SOURCES" >> $GITHUB_ENV
+
+      - name: Cache vcpkg
+        uses: actions/cache@v4
+        with:
+          path: ${{ github.workspace }}/vcpkg_cache
+          key: vcpkg-${{ runner.os }}-${{ hashFiles('vcpkg.json') }}
+          restore-keys: |
+            vcpkg-${{ runner.os }}
+
+      - name: Cache build folder
+        uses: actions/cache@v4
+        with:
+          path: |
+            build
+          key: ${{ runner.os }}-build-${{ matrix.c_compiler }}-${{ steps.strings.outputs.build-type }}-${{ github.ref_name }}-${{ hashFiles('CMakeLists.txt', '**/CMakeLists.txt', 'vcpkg.json') }}
+          restore-keys: |
+            ${{ runner.os }}-build-${{ matrix.c_compiler }}-${{ steps.strings.outputs.build-type }}-${{ github.ref_name }}-
+            ${{ runner.os }}-build-${{ matrix.c_compiler }}-${{ steps.strings.outputs.build-type }}-
+
+
+      - name: Configure CMake
+        run: |
+          cmake -S . -B build -DCMAKE_TOOLCHAIN_FILE=${{ matrix.vcpkg_root }}/scripts/buildsystems/vcpkg.cmake -DCMAKE_BUILD_TYPE=${{ steps.strings.outputs.build-type }}
+
+      - name: Build Library
+        run: cmake --build build --target ctus --config ${{ steps.strings.outputs.build-type }}
+
+      - name: Build Tests
+        run: cmake --build build --target CTUS_test --config ${{ steps.strings.outputs.build-type }}
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-artifacts-linux
+          path: build/build/ctus/lib/libctus.so
+
+      - name: Upload artifacts for test
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-artifacts-for-test
+          path: |
+            build/build/ctus/lib/libctus.so
+            build/build/CTUS_test/bin/CTUS_test
+
+  test-linux:
+    needs: build-linux
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest]
+
+    steps:
+      - name: Set reusable strings
+        id: strings
+        shell: bash
+        run: |
+          if [ "${{ github.ref }}" == "refs/heads/main" ]; then
+            echo "build-type=release" >> "$GITHUB_OUTPUT"
+            echo "test-folder=release" >> "$GITHUB_OUTPUT"
+          else
+            echo "build-type=debug" >> "$GITHUB_OUTPUT"
+            echo "test-folder=debug" >> "$GITHUB_OUTPUT"
+          fi
+      - name: "Create folder for test results"
+        run: mkdir -p ${{ github.workspace }}/build/${{ steps.strings.outputs.test-folder }}
+      - uses: actions/checkout@v4
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: build-artifacts-for-test
+          path: build/build
+
+      - name: Run Mockoon CLI
+        uses: mockoon/cli-action@v2
+        with:
+          version: "latest"
+          data-file: "./configuration/mockoon-data.json"
+          port: 3000
+
+      - name: Docker TUSD
+        if: ${{ matrix.os == 'ubuntu-latest' }}
+        run: docker run -d -p 8080:8080 tusproject/tusd:latest
+
+      - name: Test Project
+        if: ${{ matrix.os == 'ubuntu-latest' }}
+        run: |
+          chmod +x build/build/CTUS_test/bin/CTUS_test
+          export LD_LIBRARY_PATH=build/build/ctus/lib:$LD_LIBRARY_PATH
+          build/build/CTUS_test/bin/CTUS_test --gtest_output=xml:build/${{ steps.strings.outputs.test-folder }}/test-results.xml
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: build/${{ steps.strings.outputs.test-folder }}/test-results.xml
+
+

@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:gravity="center"
+    android:orientation="vertical"
+    tools:context=".activity.DeleteAccountActivity"
+    android:layout_margin="40dp">
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textStyle="bold"
+            android:text="Delete your account?"
+            android:textSize="20sp"
+            android:layout_marginBottom="10dp"
+            android:textColor="?attr/colorOnPrimary"/>
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Your account will be deactivated and won't be visible to the public."
+            android:textSize="15sp"
+            android:layout_marginBottom="10dp"
+            android:textColor="?attr/colorOnPrimary"/>
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="If you delete your account:"
+            android:textSize="15sp"
+            android:layout_marginBottom="5dp"
+            android:textColor="?attr/colorOnPrimary"/>
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="\t&#183; You won't be able to log in and use any TopTop services with that account."
+            android:textSize="15sp"
+            android:layout_marginBottom="5dp"
+            android:textColor="?attr/colorOnPrimary"/>
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="\t&#183; You will lose access to all your videos."
+            android:textSize="15sp"
+            android:layout_marginBottom="5dp"
+            android:textColor="?attr/colorOnPrimary"/>
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="\t&#183; Information that isn't stored in your account, such as direct messages, may still be visible to others."
+            android:textSize="15sp"
+            android:layout_marginBottom="10dp"
+            android:textColor="?attr/colorOnPrimary"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Do you want to continue?"
+            android:textSize="15sp"
+            android:textColor="?attr/colorOnPrimary"/>
+
+    </LinearLayout>
+
+    <Button
+        android:id="@+id/btnDelete"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:text="Continue"
+        android:textStyle="bold"
+        android:fontFamily="@font/montserrat_bold"
+        android:textColor="@color/tiktok_white"
+        android:background="@color/tiktok_red"
+        android:textAllCaps="false"/>
+</FrameLayout>

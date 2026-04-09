@@ -1,0 +1,133 @@
+name: libctus CI Windows
+
+on:
+  pull_request:
+  release:
+    types: [created]
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        c_compiler: [cl]
+        include:
+          - c_compiler: cl
+            cpp_compiler: cl
+            vcpkg_root: $PWD\vcpkg
+
+    steps:
+   
+      - uses: actions/checkout@v4
+
+      - name: Set reusable strings
+        id: strings
+        shell: bash
+        run: |
+          if [ "${{ github.ref }}" == "refs/heads/main" ]; then
+            echo "build-type=release" >> "$GITHUB_OUTPUT"
+            echo "test-folder=Release" >> "$GITHUB_OUTPUT"
+          else
+            echo "build-type=debug" >> "$GITHUB_OUTPUT"
+            echo "test-folder=Debug" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Setup vcpkg
+        run: |
+          if (-not(Test-Path -Path "${{ matrix.vcpkg_root }}")) {
+          git clone https://github.com/microsoft/vcpkg.git "${{ matrix.vcpkg_root }}"
+          & "${{ matrix.vcpkg_root }}/bootstrap-vcpkg.bat"
+          }
+      - name: Export GitHub Actions cache environment variables
+        uses: actions/github-script@v7
+        with:
+          script: |
+            core.exportVariable('ACTIONS_CACHE_URL', process.env.ACTIONS_CACHE_URL || '');
+            core.exportVariable('ACTIONS_RUNTIME_TOKEN', process.env.ACTIONS_RUNTIME_TOKEN || '');
+      - name: Setup vcpkg cache
+        shell: pwsh
+        run: |
+          New-Item -Path "${{ github.workspace }}/vcpkg_cache" -ItemType Directory -Force
+          $env:VCPKG_DEFAULT_BINARY_CACHE="${{ github.workspace }}/vcpkg_cache"
+          $env:VCPKG_BINARY_SOURCES="clear;x-gha,readwrite;files,${{ github.workspace }}/vcpkg_cache,readwrite"
+          echo "VCPKG_DEFAULT_BINARY_CACHE=${{ github.workspace }}/vcpkg_cache" | Out-File -FilePath $env:GITHUB_ENV -Append
+          echo "VCPKG_BINARY_SOURCES=$env:VCPKG_BINARY_SOURCES" | Out-File -FilePath $env:GITHUB_ENV -Append
+
+      - name: Cache vcpkg
+        uses: actions/cache@v4
+        with:
+          path: ${{ github.workspace }}/vcpkg_cache
+          key: vcpkg-${{ runner.os }}-${{ hashFiles('vcpkg.json') }}
+          restore-keys: |
+            vcpkg-${{ runner.os }}
+      - name: Cache build folder
+        uses: actions/cache@v4
+        with:
+          path: |
+            build
+          key: windows-build-${{ matrix.c_compiler }}-${{ steps.strings.outputs.build-type }}-${{ github.ref_name }}-${{ hashFiles('CMakeLists.txt', '**\CMakeLists.txt', 'vcpkg.json') }}
+          restore-keys: |
+            windows-build-${{ matrix.c_compiler }}-${{ steps.strings.outputs.build-type }}-${{ github.ref_name }}-
+            windows-build-${{ matrix.c_compiler }}-${{ steps.strings.outputs.build-type }}-
+
+      - name: Configure CMake
+        run: |
+          cmake -S . -B build -DCMAKE_TOOLCHAIN_FILE="vcpkg\scripts\buildsystems\vcpkg.cmake" -DCMAKE_BUILD_TYPE=${{ steps.strings.outputs.build-type }}
+      - name: Build Library
+        run: cmake --build build --target ctus --config ${{ steps.strings.outputs.build-type }}
+
+      - name: Copy library folder content to test build folder
+        run: |
+            if (!(Test-Path -Path "build/build/CTUS_test")) {
+                New-Item -ItemType Directory -Path "build/build/CTUS_test"
+            }
+            Copy-Item -Path "build/build/ctus/bin/*" -Destination "build/build/CTUS_test/bin" -Recurse -Force
+
+      - name: Build Tests
+        run: cmake --build build --target CTUS_test --config ${{ steps.strings.outputs.build-type }}
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-artifacts-windows
+          path: build/build/ctus/bin/
+
+      - name: Upload artifacts for test
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-artifacts-for-test
+          path: |
+            build/build/CTUS_test/bin/
+
+  test-windows:
+    needs: build-windows
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+     
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: build-artifacts-for-test
+          path: build/build
+
+      - name: Run Mockoon CLI
+        uses: mockoon/cli-action@v2
+        with:
+          version: "latest"
+          data-file: "./configuration/mockoon-data.json"
+          port: 3000
+
+      - name: Download tusd server
+        run: |
+          curl -L -o tusd_windows_amd64.zip https://github.com/tus/tusd/releases/download/v2.5.0/tusd_windows_amd64.zip
+          mkdir tusd
+          tar -xf tusd_windows_amd64.zip -C tusd
+
+      - name: Start tusd server
+        run: Start-Process -FilePath "${{ github.workspace }}\tusd\tusd_windows_amd64\tusd.exe" -ArgumentList "-port 8080 -host 0.0.0.0"
+
+      - name: Run Tests
+        run: |
+          .\build\build\Debug\CTUS_test.exe --gtest_output=xml:test-results.xml

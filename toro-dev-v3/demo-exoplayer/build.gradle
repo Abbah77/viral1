@@ -1,0 +1,92 @@
+/*
+ * Copyright (c) 2018 Nam Nguyen, nam@ene.im
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *        http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+apply plugin: 'com.android.application'
+apply plugin: 'kotlin-android'
+apply plugin: 'kotlin-android-extensions'
+apply plugin: 'kotlin-kapt'
+apply plugin: 'com.getkeepsafe.dexcount'
+
+android {
+  compileSdkVersion rootProject.ext.androidVersion
+
+  defaultConfig {
+    applicationId "toro.demo.exoplayer"
+    minSdkVersion rootProject.ext.demoMinSDK
+    targetSdkVersion rootProject.ext.androidVersion
+    versionCode releaseVersionCode
+    versionName "v" + releaseVersion
+    testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+
+    vectorDrawables.useSupportLibrary = true
+  }
+
+  buildTypes {
+    release {
+      minifyEnabled false
+      proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+    }
+  }
+
+  packagingOptions {
+    exclude 'META-INF/services/javax.annotation.processing.Processor'
+  }
+
+  lintOptions {
+    disable 'InvalidPackage'
+    abortOnError false
+  }
+
+  compileOptions {
+    sourceCompatibility JavaVersion.VERSION_1_8
+    targetCompatibility JavaVersion.VERSION_1_8
+  }
+}
+
+dependencies {
+  implementation fileTree(dir: 'libs', include: ['*.jar'])
+  implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
+
+  implementation project(':toro-core')
+  implementation project(':toro-exoplayer')
+
+  //noinspection GradleDependency
+  implementation "com.google.android.exoplayer:exoplayer:${rootProject.ext.exoPlayer2Version}"
+
+  //noinspection GradleCompatible
+  implementation 'com.google.android.material:material:1.0.0'
+  implementation 'androidx.appcompat:appcompat:1.1.0'
+  implementation 'androidx.cardview:cardview:1.0.0'
+  // implementation "com.android.support:support-vector-drawable:${rootProject.ext.supportLibraryVersion}"
+  implementation "androidx.constraintlayout:constraintlayout:${rootProject.ext.constrainLayoutVersion}"
+
+  implementation group: 'org.jsoup', name: 'jsoup', version: '1.12.1'
+  implementation 'io.reactivex.rxjava2:rxandroid:2.1.1'
+  implementation 'io.reactivex.rxjava2:rxjava:2.2.13'
+
+  implementation 'com.jakewharton:butterknife:10.1.0'
+  kapt 'com.jakewharton:butterknife-compiler:10.1.0'
+
+  implementation 'androidx.lifecycle:lifecycle-extensions:2.1.0'
+  implementation 'androidx.lifecycle:lifecycle-common-java8:2.1.0'
+  // kapt "android.arch.lifecycle:compiler:${rootProject.ext.archLibraryVersion}"
+
+  implementation 'com.google.android:flexbox:1.1.0'
+
+  testImplementation 'junit:junit:4.12'
+  androidTestImplementation 'androidx.test.ext:junit:1.1.1'
+  androidTestImplementation 'androidx.test.espresso:espresso-core:3.2.0'
+}

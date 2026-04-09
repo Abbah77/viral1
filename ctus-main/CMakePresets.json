@@ -1,0 +1,10 @@
+{
+  "version": 3,
+  "configurePresets": [
+    {
+      "name": "vcpkg-default",
+      "hidden": true,
+      "binaryDir": "${sourceDir}/build/"
+    }
+  ]
+}

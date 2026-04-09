@@ -1,0 +1,172 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    package="com.example.tiktokcloneproject">
+
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.CAMERA" />
+
+    <uses-feature android:name="android.hardware.camera" />
+
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <uses-permission android:name="android.permission.ACCESS_MEDIA_LOCATION" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.ACCESS_NOTIFICATION_POLICY" />
+
+    <uses-feature android:name="android.hardware.location.gps" />
+
+    <application
+        android:name=".helper.GlobalVariable"
+        android:allowBackup="true"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:fullBackupContent="@xml/backup_rules"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.TikTokCloneProject"
+        tools:targetApi="31">
+
+        <activity
+            android:name=".activity.DeleteVideoSettingActivity"
+            android:exported="false" />
+        <activity
+            android:name=".activity.VideoActivity"
+            android:exported="true" >
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <data android:scheme="http" />
+                <data android:scheme="https" />
+                <data android:host="video.toptoptoptop.com" />
+            </intent-filter>
+        </activity>
+        <activity
+            android:name=".activity.VideoHomeScreenActivity"
+            android:exported="false"
+            android:launchMode="singleTask"/>
+        <activity
+            android:name=".activity.EditActivity"
+            android:exported="false" />
+        <activity
+            android:name=".activity.InboxActivity"
+            android:exported="false" />
+        <activity
+            android:name=".activity.FollowListActivity"
+            android:exported="false" />
+        <activity
+            android:name=".activity.HomeScreenActivity"
+            android:exported="false"
+           />
+        <activity
+            android:name=".activity.EmailSignInActivity"
+            android:exported="false" />
+        <activity
+            android:name=".activity.EmailSignupActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <data
+                    android:host="example.com"
+                    android:scheme="https" />
+            </intent-filter>
+        </activity>
+        <activity
+            android:name=".activity.SignupChoiceActivity"
+            android:exported="false" />
+        <activity
+            android:name=".activity.SigninChoiceActivity"
+            android:exported="false" />
+        <activity
+            android:name=".activity.DescriptionVideoActivity"
+            android:exported="false" /> <!-- <activity -->
+        <!-- android:name=".WaitingFragment" -->
+        <!-- android:exported="false" /> -->
+        <activity
+            android:name=".activity.ChangePasswordActivity"
+            android:exported="false" />
+        <activity
+            android:name=".activity.FullScreenAvatarActivity"
+            android:exported="false" />
+        <activity
+            android:name=".activity.SignInToDeleteActivity"
+            android:exported="false" />
+        <activity
+            android:name=".activity.AccountSettingActivity"
+            android:exported="false" />
+        <activity
+            android:name=".activity.SettingsAndPrivacyActivity"
+            android:exported="false" />
+        <activity
+            android:name=".activity.PhoneSigninActivity"
+            android:exported="false" />
+        <activity
+            android:name=".activity.DeleteAccountActivity"
+            android:exported="false" />
+        <activity
+            android:name=".activity.ProfileActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <data android:scheme="http" />
+                <data android:scheme="https" />
+                <data android:host="toptoptoptop.com" />
+            </intent-filter>
+        </activity>
+        <activity
+            android:name=".activity.SplashScreenActivity"
+            android:exported="true"
+            android:theme="@style/SplashTheme">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <activity
+            android:name=".activity.EditProfileActivity"
+            android:exported="false" />
+        <activity
+            android:name=".activity.EmailLogInActivity"
+            android:exported="false" />
+        <activity
+            android:name=".activity.LoginOptionsActivity"
+            android:exported="false" /> <!-- HomeScreenActivity   PhoneSignupActivity  MainActivity -->
+        <activity
+            android:name=".activity.PhoneSignupActivity"
+            android:exported="false" />
+        <activity
+            android:name=".activity.MainActivity"
+            android:exported="false" />
+        <activity
+            android:name=".activity.SearchActivity"
+            android:exported="false" />
+        <activity
+            android:name=".activity.FollowActivity"
+            android:exported="false" />
+        <activity
+            android:name=".activity.CameraActivity"
+            android:exported="false" />
+        <activity
+            android:name=".activity.CommentActivity"
+            android:exported="false"/>
+        <activity
+            android:name=".activity.ShareAccountActivity"
+            android:exported="false"
+            android:theme="@android:style/Theme.Translucent.NoTitleBar.Fullscreen" />
+    </application>
+
+</manifest>

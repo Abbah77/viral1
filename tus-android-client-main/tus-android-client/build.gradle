@@ -1,0 +1,106 @@
+plugins {
+    id('com.android.library')
+    id('signing')
+}
+
+android {
+    compileSdk 34
+    setBuildToolsVersion("30.0.3")
+
+    defaultConfig {
+        minSdkVersion 14
+        targetSdk 33
+    }
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_11
+        targetCompatibility JavaVersion.VERSION_11
+    }
+    namespace 'io.tus.android.client'
+    publishing {
+        singleVariant('release') {
+            withSourcesJar()
+            withJavadocJar()
+        }
+    }
+}
+
+def config = new ConfigSlurper().parse(new File("${projectDir}/src/main/res/tus-android-client-version/version.properties").toURI().toURL())
+description=config.descritpion
+version=config.version
+
+dependencies {
+    implementation fileTree(dir: 'libs', include: ['*.jar'])
+    implementation 'io.tus.java.client:tus-java-client:0.5.1'
+    testImplementation 'org.robolectric:robolectric:4.16.1'
+    testImplementation 'junit:junit:4.13.2'
+}
+
+def pomConfig = {
+    name 'tus-android-client'
+    url 'http://tus.io'
+
+    developers {
+        developer {
+            id 'acconut'
+            name 'Marius Kleidl'
+            email 'marius@transloadit.com'
+        }
+        developer {
+            id 'cdr-chakotay'
+            name 'Florian Kuenzig'
+            email 'florian@transloadit.com'
+        }
+    }
+
+    inceptionYear '2015'
+    licenses {
+        license {
+            name 'The MIT License (MIT)'
+            url 'http://opensource.org/licenses/MIT'
+        }
+    }
+
+    scm {
+        url 'https://github.com/tus/tus-android-client'
+        connection 'https://github.com/tus/tus-android-client'
+        developerConnection 'https://github.com/tus/tus-android-client'
+    }
+}
+
+publishing {
+    publications {
+        androidRelease(MavenPublication) {
+            afterEvaluate {
+                from components.release
+                groupId 'io.tus.android.client'
+                artifactId 'tus-android-client'
+                description project.getDescription()
+                version project.getVersion()
+
+                artifact (project.layout.buildDirectory.dir('outputs/aar/tus-android-client-release.aar')) {
+                    builtBy assemble
+                }
+
+                pom.withXml {
+                    def root = asNode()
+                    root.appendNode('description', project.getDescription())
+                    root.children().last() + pomConfig
+                }
+            }
+        }
+    }
+}
+
+signing {
+    def signingKeyId = System.getenv('SIGNING_KEY_ID')
+    def signingPassword = System.getenv('SIGNING_KEY_PASSWORD')
+    def signingKey = System.getenv('SIGNING_KEY_AMORED')
+    useInMemoryPgpKeys(signingKeyId, signingKey, signingPassword)
+    sign publishing.publications.androidRelease
+}

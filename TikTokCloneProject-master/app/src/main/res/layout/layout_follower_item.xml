@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="horizontal"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    >
+    <de.hdodenhof.circleimageview.CircleImageView
+        android:id="@+id/imv_follower_avatar"
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        android:layout_gravity="center"
+        android:layout_margin="15dp"
+        android:clickable="true"
+        android:src="@drawable/default_avatar"></de.hdodenhof.circleimageview.CircleImageView>
+
+
+    <TextView
+        android:id="@+id/tv_followers_userMame"
+        android:layout_width="130dp"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:layout_margin="15dp"
+        android:text="aaaaaaa"
+        android:textSize="15sp"
+        android:textColor="?attr/colorOnPrimary"
+        android:textStyle="bold" />
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="35dp"
+        android:layout_margin="15dp"
+        android:layout_marginRight="20dp"
+        android:layout_gravity="center"
+        android:textSize="10dp"
+        android:text="Follow back"
+        style="@style/tiktok_button_red"/>
+    <TextView
+        android:id="@+id/tv_remove_follower"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="&#8722;"
+        android:textColor="@color/tiktok_red"
+        android:layout_gravity="center"
+        android:gravity="end"
+        android:layout_marginRight="10dp"
+        android:textSize="25dp"
+        android:clickable="true"/>
+</LinearLayout>
