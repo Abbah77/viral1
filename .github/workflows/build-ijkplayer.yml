@@ -1,4 +1,4 @@
-name: Build ijkplayer arm64 (Debug)
+name: Find all .so files (Debug)
 
 on:
   workflow_dispatch:
@@ -21,7 +21,6 @@ jobs:
           unzip -q android-ndk-r21e-linux-x86_64.zip
           echo "ANDROID_NDK=$PWD/android-ndk-r21e" >> $GITHUB_ENV
           echo "ANDROID_NDK_ROOT=$PWD/android-ndk-r21e" >> $GITHUB_ENV
-          echo "$PWD/android-ndk-r21e" >> $GITHUB_PATH
 
       - name: Patch ijkplayer NDK version check
         run: |
@@ -36,29 +35,30 @@ jobs:
           ./init-android.sh
 
       - name: Compile FFmpeg arm64
-        env:
-          ANDROID_NDK: ${{ env.ANDROID_NDK }}
-          ANDROID_NDK_ROOT: ${{ env.ANDROID_NDK }}
         run: |
           cd ijk-player/android/contrib
           ./compile-ffmpeg.sh arm64
 
       - name: Compile ijkplayer arm64
-        env:
-          ANDROID_NDK: ${{ env.ANDROID_NDK }}
-          ANDROID_NDK_ROOT: ${{ env.ANDROID_NDK }}
         run: |
           cd ijk-player/android
           ./compile-ijk.sh arm64
 
-      - name: DEBUG - Find all .so files
+      - name: Find ALL .so files and show locations
         run: |
-          echo "=== All .so files in ijk-player ==="
-          find ijk-player -name "*.so" -type f -exec ls -lh {} \; 2>/dev/null
+          echo "=== Searching for all .so files ==="
+          find . -name "*.so" -type f -exec ls -lh {} \; 2>/dev/null
           
-          echo "=== Directory structure ==="
-          tree ijk-player/android/ijkplayer/ 2>/dev/null || find ijk-player/android/ijkplayer/ -type d
+          echo ""
+          echo "=== Common locations to check ==="
+          ls -la ijk-player/android/ijkplayer/ijkplayer-arm64/src/main/libs/arm64-v8a/ 2>/dev/null || echo "Not in ijkplayer-arm64"
+          ls -la ijk-player/android/ijkplayer/ijkplayer-armv7a/src/main/libs/ 2>/dev/null || echo "Not in armv7a"
+          ls -la ijk-player/android/ijkplayer/build/intermediates/ 2>/dev/null || echo "Not in build/intermediates"
+          ls -la ijk-player/android/ijkplayer/ijkplayer/build/outputs/ 2>/dev/null || echo "Not in build/outputs"
           
-          echo "=== Checking specific expected locations ==="
-          ls -la ijk-player/android/ijkplayer/ijkplayer-arm64-v8a/src/main/jniLibs/arm64-v8a/ 2>/dev/null || echo "Not found"
-          ls -la ijk-player/android/ijkplayer/build/outputs/ 2>/dev/null || echo "Not found"
+      - name: Upload everything we find
+        uses: actions/upload-artifact@v4
+        with:
+          name: all-so-files
+          path: "**/*.so"
+          retention-days: 7
