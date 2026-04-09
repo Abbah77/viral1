@@ -16,12 +16,12 @@ jobs:
         sudo apt-get update
         sudo apt-get install -y yasm nasm gcc make git pkg-config
 
-    - name: Setup Android NDK r25c
+    - name: Setup Android NDK r21e
       run: |
-        wget -q https://dl.google.com/android/repository/android-ndk-r25c-linux.zip
-        unzip -q android-ndk-r25c-linux.zip
-        echo "ANDROID_NDK=$PWD/android-ndk-r25c" >> $GITHUB_ENV
-        echo "$PWD/android-ndk-r25c" >> $GITHUB_PATH
+        wget -q https://dl.google.com/android/repository/android-ndk-r21e-linux-x86_64.zip
+        unzip -q android-ndk-r21e-linux-x86_64.zip
+        echo "ANDROID_NDK=$PWD/android-ndk-r21e" >> $GITHUB_ENV
+        echo "$PWD/android-ndk-r21e" >> $GITHUB_PATH
 
     - name: Patch ijkplayer NDK version check
       run: |
