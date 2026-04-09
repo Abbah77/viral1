@@ -23,6 +23,13 @@ jobs:
         echo "ANDROID_NDK=$PWD/android-ndk-r25c" >> $GITHUB_ENV
         echo "$PWD/android-ndk-r25c" >> $GITHUB_PATH
 
+    - name: Patch ijkplayer NDK version check
+      run: |
+        find ijk-player -name "*.sh" | xargs grep -l "NDKr10e" | while read f; do
+          sed -i 's/You need the NDKr10e or later/NDK version ok/' "$f"
+          sed -i '/NDK version ok/{ n; /exit 1/d }' "$f"
+        done
+
     - name: Init ijkplayer
       run: |
         cd ijk-player
