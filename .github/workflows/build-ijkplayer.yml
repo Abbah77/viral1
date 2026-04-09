@@ -1,41 +1,66 @@
-Skip to content
-Abbah77
-viral1
-Repository navigation
-Code
-Issues
-Pull requests
-Actions
-Projects
-Wiki
-Security and quality
-1
- (1)
-Insights
-Settings
-Important update
-On April 24 we'll start using GitHub Copilot interaction data for AI model training unless you opt out. Review this update and manage your preferences in your GitHub account settings.
-Build ijkplayer arm64
-Build ijkplayer arm64 #6
-All jobs
-Run details
-Annotations
-1 error and 1 warning
-build
-failed 5 hours ago in 3m 53s
-Search logs
-1s
-2s
-15s
-55s
-0s
-1m 10s
-1m 26s
-0s
-Run cd ijk-player/android/contrib
-/home/runner/work/_temp/5f0a71e7-2b79-4dff-9d7e-448154d7b459.sh: line 2: ./compile-ijk.sh: No such file or directory
-Error: Process completed with exit code 127.
-0s
-0s
-0s
-0s
+name: Build ijkplayer arm64
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Install build tools
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y yasm nasm gcc make git pkg-config
+
+    - name: Setup Android NDK r21e
+      run: |
+        wget -q https://dl.google.com/android/repository/android-ndk-r21e-linux-x86_64.zip
+        unzip -q android-ndk-r21e-linux-x86_64.zip
+        echo "ANDROID_NDK=$PWD/android-ndk-r21e" >> $GITHUB_ENV
+        echo "ANDROID_NDK_ROOT=$PWD/android-ndk-r21e" >> $GITHUB_ENV
+        echo "$PWD/android-ndk-r21e" >> $GITHUB_PATH
+
+    - name: Patch ijkplayer NDK version check
+      run: |
+        find ijk-player -name "*.sh" | xargs grep -l "NDKr10e" | while read f; do
+          sed -i 's/You need the NDKr10e or later/NDK version ok/' "$f"
+          sed -i '/NDK version ok/{ n; /exit 1/d }' "$f"
+        done
+
+    - name: Init ijkplayer
+      run: |
+        cd ijk-player
+        ./init-android.sh
+
+    - name: Compile FFmpeg arm64
+      env:
+        ANDROID_NDK: ${{ env.ANDROID_NDK }}
+        ANDROID_NDK_ROOT: ${{ env.ANDROID_NDK }}
+      run: |
+        cd ijk-player/android/contrib
+        ./compile-ffmpeg.sh arm64
+
+    - name: Compile ijkplayer arm64
+      env:
+        ANDROID_NDK: ${{ env.ANDROID_NDK }}
+        ANDROID_NDK_ROOT: ${{ env.ANDROID_NDK }}
+      run: |
+        cd ijk-player/android
+        ./compile-ijk.sh arm64
+
+    - name: Collect .so files
+      run: |
+        mkdir -p output/arm64-v8a
+        find ijk-player -name "*.so" -exec cp {} output/arm64-v8a/ \;
+        ls -lh output/arm64-v8a/
+
+    - name: Upload compiled libraries
+      uses: actions/upload-artifact@v4
+      with:
+        name: ijkplayer-arm64
+        path: output/
+        retention-days: 30
