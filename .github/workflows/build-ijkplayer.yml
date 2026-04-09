@@ -51,18 +51,19 @@ jobs:
       run: |
         cd ijk-player/android
         ./compile-ijk.sh arm64
+        echo "=== Searching for ijkplayer .so files ==="
+        find . -name "libijkplayer.so" -o -name "libijksdl.so" | sort
 
-    - name: Collect .so files
+    - name: Collect ONLY ijkplayer .so files
       run: |
         mkdir -p output/arm64-v8a
 
-        echo "=== ALL .so files found ==="
-        find ijk-player -name "*.so" | sort
+        # Search only inside ijk-player directory
+        find ijk-player -name "libijkffmpeg.so" -exec cp {} output/arm64-v8a/ \;
+        find ijk-player -name "libijkplayer.so" -exec cp {} output/arm64-v8a/ \;
+        find ijk-player -name "libijksdl.so"    -exec cp {} output/arm64-v8a/ \;
 
-        # Copy all .so files so we can see what's available
-        find ijk-player -name "*.so" -exec cp {} output/arm64-v8a/ \;
-
-        echo "=== Copied files ==="
+        echo "=== Final output ==="
         ls -lh output/arm64-v8a/
         du -sh output/
 
