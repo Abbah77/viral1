@@ -1,4 +1,4 @@
-name: Build ijkplayer arm64 (Minimal)
+name: Build ijkplayer arm64 (Debug)
 
 on:
   workflow_dispatch:
@@ -13,7 +13,7 @@ jobs:
       - name: Install build tools
         run: |
           sudo apt-get update
-          sudo apt-get install -y yasm nasm gcc make git pkg-config
+          sudo apt-get install -y yasm nasm gcc make git pkg-config tree
 
       - name: Setup Android NDK r21e
         run: |
@@ -51,24 +51,14 @@ jobs:
           cd ijk-player/android
           ./compile-ijk.sh arm64
 
-      - name: Collect ONLY essential .so files
+      - name: DEBUG - Find all .so files
         run: |
-          mkdir -p output/arm64-v8a
+          echo "=== All .so files in ijk-player ==="
+          find ijk-player -name "*.so" -type f -exec ls -lh {} \; 2>/dev/null
           
-          # Find and copy only the 3 essential .so files
-          find ijk-player -name "libijkffmpeg.so" -exec cp {} output/arm64-v8a/ \; 2>/dev/null
-          find ijk-player -name "libijkplayer.so" -exec cp {} output/arm64-v8a/ \; 2>/dev/null
-          find ijk-player -name "libijksdl.so" -exec cp {} output/arm64-v8a/ \; 2>/dev/null
+          echo "=== Directory structure ==="
+          tree ijk-player/android/ijkplayer/ 2>/dev/null || find ijk-player/android/ijkplayer/ -type d
           
-          echo "=== Essential .so files collected ==="
-          ls -lh output/arm64-v8a/
-          
-          echo "=== Total size ==="
-          du -sh output/
-
-      - name: Upload minimal libraries
-        uses: actions/upload-artifact@v4
-        with:
-          name: ijkplayer-arm64-minimal
-          path: output/
-          retention-days: 30
+          echo "=== Checking specific expected locations ==="
+          ls -la ijk-player/android/ijkplayer/ijkplayer-arm64-v8a/src/main/jniLibs/arm64-v8a/ 2>/dev/null || echo "Not found"
+          ls -la ijk-player/android/ijkplayer/build/outputs/ 2>/dev/null || echo "Not found"
