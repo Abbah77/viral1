@@ -1,4 +1,4 @@
-name: Build ijkplayer arm64 (Minimal)
+name: Build ijkplayer arm64
 
 on:
   workflow_dispatch:
@@ -9,7 +9,7 @@ jobs:
 
     steps:
     - name: Checkout code
-      uses: actions/checkout@v4
+      uses: actions/checkout@v3
 
     - name: Install build tools
       run: |
@@ -28,7 +28,7 @@ jobs:
       run: |
         find ijk-player -name "*.sh" | xargs grep -l "NDKr10e" | while read f; do
           sed -i 's/You need the NDKr10e or later/NDK version ok/' "$f"
-          sed -i '/NDK version ok/{ n; /exit 1/d; }' "$f"
+          sed -i '/NDK version ok/{ n; /exit 1/d }' "$f"
         done
 
     - name: Init ijkplayer
@@ -39,7 +39,7 @@ jobs:
     - name: Compile FFmpeg arm64
       env:
         ANDROID_NDK: ${{ env.ANDROID_NDK }}
-        ANDROID_NDK_ROOT: ${{ env.ANDROID_NDK_ROOT }}
+        ANDROID_NDK_ROOT: ${{ env.ANDROID_NDK }}
       run: |
         cd ijk-player/android/contrib
         ./compile-ffmpeg.sh arm64
@@ -47,30 +47,27 @@ jobs:
     - name: Compile ijkplayer arm64
       env:
         ANDROID_NDK: ${{ env.ANDROID_NDK }}
-        ANDROID_NDK_ROOT: ${{ env.ANDROID_NDK_ROOT }}
+        ANDROID_NDK_ROOT: ${{ env.ANDROID_NDK }}
       run: |
         cd ijk-player/android
         ./compile-ijk.sh arm64
 
-    - name: Collect essential .so files only
+    - name: Collect .so files
       run: |
         mkdir -p output/arm64-v8a
-        
-        # Find and copy only the 3 essential libraries
-        find ijk-player/android -path "*/arm64-v8a/libijkffmpeg.so" -exec cp {} output/arm64-v8a/ \; 2>/dev/null
-        find ijk-player/android -path "*/arm64-v8a/libijkplayer.so" -exec cp {} output/arm64-v8a/ \; 2>/dev/null
-        find ijk-player/android -path "*/arm64-v8a/libijksdl.so" -exec cp {} output/arm64-v8a/ \; 2>/dev/null
-        
-        echo ""
-        echo "=== Essential libraries collected ==="
+
+        # Only the 3 essential .so files
+        find ijk-player -name "libijkffmpeg.so" -exec cp {} output/arm64-v8a/ \;
+        find ijk-player -name "libijkplayer.so" -exec cp {} output/arm64-v8a/ \;
+        find ijk-player -name "libijksdl.so" -exec cp {} output/arm64-v8a/ \;
+
+        echo "=== Final .so files ==="
         ls -lh output/arm64-v8a/
-        echo ""
-        echo "=== Total artifact size ==="
         du -sh output/
 
-    - name: Upload libraries
+    - name: Upload compiled libraries
       uses: actions/upload-artifact@v4
       with:
-        name: ijkplayer-arm64-minimal
+        name: ijkplayer-arm64
         path: output/
         retention-days: 30
