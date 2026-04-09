@@ -11,24 +11,24 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v3
 
-    - name: Setup Android NDK
-      uses: android-actions/setup-android@v3
-
     - name: Install build tools
       run: |
         sudo apt-get update
         sudo apt-get install -y yasm nasm gcc make git pkg-config
 
-    - name: Setup NDK environment
+    - name: Setup Android NDK r25c
       run: |
-        echo "ANDROID_NDK=$ANDROID_SDK_ROOT/ndk/25.2.9519653" >> $GITHUB_ENV
+        wget -q https://dl.google.com/android/repository/android-ndk-r25c-linux.zip
+        unzip -q android-ndk-r25c-linux.zip
+        echo "ANDROID_NDK=$PWD/android-ndk-r25c" >> $GITHUB_ENV
+        echo "$PWD/android-ndk-r25c" >> $GITHUB_PATH
 
     - name: Init ijkplayer
       run: |
         cd ijk-player
         ./init-android.sh
 
-    - name: Compile FFmpeg arm64 only
+    - name: Compile FFmpeg arm64
       run: |
         cd ijk-player/android/contrib
         ./compile-ffmpeg.sh arm64
