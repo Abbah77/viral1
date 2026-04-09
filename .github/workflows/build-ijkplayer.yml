@@ -20,6 +20,15 @@ jobs:
           wget -q https://dl.google.com/android/repository/android-ndk-r21e-linux-x86_64.zip
           unzip -q android-ndk-r21e-linux-x86_64.zip
           echo "ANDROID_NDK=$PWD/android-ndk-r21e" >> $GITHUB_ENV
+          echo "ANDROID_NDK_ROOT=$PWD/android-ndk-r21e" >> $GITHUB_ENV
+          echo "$PWD/android-ndk-r21e" >> $GITHUB_PATH
+
+      - name: Verify NDK setup
+        run: |
+          echo "ANDROID_NDK=$ANDROID_NDK"
+          echo "ANDROID_NDK_ROOT=$ANDROID_NDK_ROOT"
+          ls -la $ANDROID_NDK/
+          $ANDROID_NDK/ndk-build --version
 
       - name: Patch ijkplayer NDK version check
         run: |
@@ -34,11 +43,17 @@ jobs:
           ./init-android.sh
 
       - name: Compile FFmpeg arm64 ONLY
+        env:
+          ANDROID_NDK: ${{ env.ANDROID_NDK }}
+          ANDROID_NDK_ROOT: ${{ env.ANDROID_NDK_ROOT }}
         run: |
           cd ijk-player/android/contrib
           ./compile-ffmpeg.sh arm64
 
       - name: Compile ijkplayer arm64 ONLY
+        env:
+          ANDROID_NDK: ${{ env.ANDROID_NDK }}
+          ANDROID_NDK_ROOT: ${{ env.ANDROID_NDK_ROOT }}
         run: |
           cd ijk-player/android
           ./compile-ijk.sh arm64
@@ -46,8 +61,8 @@ jobs:
       - name: Collect arm64 .so files
         run: |
           mkdir -p output/arm64-v8a
-          cp ijk-player/android/ijkplayer/ijkplayer-arm64/src/main/libs/arm64-v8a/*.so output/arm64-v8a/ 2>/dev/null
-          cp ijk-player/android/ijkplayer/ijkplayer-arm64-v8a/src/main/jniLibs/arm64-v8a/*.so output/arm64-v8a/ 2>/dev/null
+          find ijk-player -path "*/arm64-v8a/*.so" -exec cp {} output/arm64-v8a/ \; 2>/dev/null
+          echo "=== Collected .so files ==="
           ls -lh output/arm64-v8a/
 
       - name: Upload arm64 libraries
