@@ -1,4 +1,4 @@
-name: Find all .so files (Debug)
+name: Build ijkplayer arm64 ONLY
 
 on:
   workflow_dispatch:
@@ -13,14 +13,13 @@ jobs:
       - name: Install build tools
         run: |
           sudo apt-get update
-          sudo apt-get install -y yasm nasm gcc make git pkg-config tree
+          sudo apt-get install -y yasm nasm gcc make git pkg-config
 
       - name: Setup Android NDK r21e
         run: |
           wget -q https://dl.google.com/android/repository/android-ndk-r21e-linux-x86_64.zip
           unzip -q android-ndk-r21e-linux-x86_64.zip
           echo "ANDROID_NDK=$PWD/android-ndk-r21e" >> $GITHUB_ENV
-          echo "ANDROID_NDK_ROOT=$PWD/android-ndk-r21e" >> $GITHUB_ENV
 
       - name: Patch ijkplayer NDK version check
         run: |
@@ -34,31 +33,26 @@ jobs:
           cd ijk-player
           ./init-android.sh
 
-      - name: Compile FFmpeg arm64
+      - name: Compile FFmpeg arm64 ONLY
         run: |
           cd ijk-player/android/contrib
           ./compile-ffmpeg.sh arm64
 
-      - name: Compile ijkplayer arm64
+      - name: Compile ijkplayer arm64 ONLY
         run: |
           cd ijk-player/android
           ./compile-ijk.sh arm64
 
-      - name: Find ALL .so files and show locations
+      - name: Collect arm64 .so files
         run: |
-          echo "=== Searching for all .so files ==="
-          find . -name "*.so" -type f -exec ls -lh {} \; 2>/dev/null
-          
-          echo ""
-          echo "=== Common locations to check ==="
-          ls -la ijk-player/android/ijkplayer/ijkplayer-arm64/src/main/libs/arm64-v8a/ 2>/dev/null || echo "Not in ijkplayer-arm64"
-          ls -la ijk-player/android/ijkplayer/ijkplayer-armv7a/src/main/libs/ 2>/dev/null || echo "Not in armv7a"
-          ls -la ijk-player/android/ijkplayer/build/intermediates/ 2>/dev/null || echo "Not in build/intermediates"
-          ls -la ijk-player/android/ijkplayer/ijkplayer/build/outputs/ 2>/dev/null || echo "Not in build/outputs"
-          
-      - name: Upload everything we find
+          mkdir -p output/arm64-v8a
+          cp ijk-player/android/ijkplayer/ijkplayer-arm64/src/main/libs/arm64-v8a/*.so output/arm64-v8a/ 2>/dev/null
+          cp ijk-player/android/ijkplayer/ijkplayer-arm64-v8a/src/main/jniLibs/arm64-v8a/*.so output/arm64-v8a/ 2>/dev/null
+          ls -lh output/arm64-v8a/
+
+      - name: Upload arm64 libraries
         uses: actions/upload-artifact@v4
         with:
-          name: all-so-files
-          path: "**/*.so"
-          retention-days: 7
+          name: ijkplayer-arm64-only
+          path: output/
+          retention-days: 30
