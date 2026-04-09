@@ -56,12 +56,13 @@ jobs:
       run: |
         mkdir -p output/arm64-v8a
 
-        # Only the 3 essential .so files
-        find ijk-player -name "libijkffmpeg.so" -exec cp {} output/arm64-v8a/ \;
-        find ijk-player -name "libijkplayer.so" -exec cp {} output/arm64-v8a/ \;
-        find ijk-player -name "libijksdl.so" -exec cp {} output/arm64-v8a/ \;
+        echo "=== ALL .so files found ==="
+        find ijk-player -name "*.so" | sort
 
-        echo "=== Final .so files ==="
+        # Copy all .so files so we can see what's available
+        find ijk-player -name "*.so" -exec cp {} output/arm64-v8a/ \;
+
+        echo "=== Copied files ==="
         ls -lh output/arm64-v8a/
         du -sh output/
 
